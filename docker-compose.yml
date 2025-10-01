@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: productosdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    environment:
+      DB_CLIENT: pg
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: productosdb
+      DB_PORT: 5432
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    command: sh -c "npm run migrate && node src/index.js"
+    volumes:
+      - ./backend:/usr/src/app
+
+  frontend:
+    image: nginx:stable-alpine
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - '8080:80'
+
+volumes:
+  db_data:
