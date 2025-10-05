@@ -10,8 +10,8 @@ Asegúrate de tener **Docker** y **docker-compose** instalados en tu sistema.
 
 1. Clona este repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/tu-repositorio.git
-   cd tu-repositorio
+   git clone https://github.com/AncelrHub/fastify-productos
+   cd fastify-productos
    ```
 
 2. Inicia los servicios:
