@@ -1,3 +1,4 @@
+// backend/src/routes.js
 const fp = require('fastify-plugin');
 
 async function routes(fastify, options) {
@@ -9,34 +10,38 @@ async function routes(fastify, options) {
       required: ['nombre', 'precio'],
       properties: {
         nombre: { type: 'string' },
-        precio: { type: 'number' }
+        precio: { type: 'number' },
+        stock: { type: 'integer' }
       }
     }
   };
 
+  // Listar todos los productos
+  fastify.get('/productos', async (request, reply) => {
+    try {
+      const productos = await knex('productos').select('*').orderBy('id', 'asc');
+      return productos;
+    } catch (err) {
+      fastify.log.error(err);
+      reply.code(500).send({ error: 'Error al obtener productos' });
+    }
+  });
+
+  // Crear un producto
   fastify.post('/productos', { schema: productSchema }, async (request, reply) => {
     try {
-      const { nombre, precio } = request.body;
-      const [id] = await knex('productos').insert({ nombre, precio }).returning('id');
-      const insertedId = typeof id === 'object' && id.id ? id.id : id;
-      const newProduct = await knex('productos').where({ id: insertedId }).first();
-      return reply.code(201).send(newProduct);
+      const { nombre, precio, stock = 0 } = request.body;
+      // Insert and return inserted row (Postgres supports returning)
+      const [inserted] = await knex('productos').insert({ nombre, precio, stock }).returning('*');
+      // inserted puede ser un objeto con la fila completa
+      return reply.code(201).send(inserted);
     } catch (err) {
       fastify.log.error(err);
       reply.code(500).send({ error: 'Error al crear producto' });
     }
   });
 
-  fastify.get('/productos', async (request, reply) => {
-    try {
-      const prods = await knex('productos').select('*').orderBy('id', 'desc');
-      return prods;
-    } catch (err) {
-      fastify.log.error(err);
-      reply.code(500).send({ error: 'Error al listar productos' });
-    }
-  });
-
+  // Eliminar producto por id
   fastify.delete('/productos/:id', async (request, reply) => {
     try {
       const { id } = request.params;
